@@ -5,6 +5,7 @@ import Board from './components/Board'
 import CardSelectorModal from './components/CardSelectorModal'
 import { Deck } from './utils/deck'
 import NumericStepper from './components/NumericStepper'
+import HandRankingModal from './components/HandRankingModal'
 import './index.css'
 
 // Instantiate calculator once
@@ -25,6 +26,7 @@ function App() {
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [isRankingModalOpen, setIsRankingModalOpen] = useState<boolean>(false);
   const [editingSlot, setEditingSlot] = useState<{ type: 'player' | 'board', index: number, subIndex?: number } | null>(null);
   // editingSlot: { type: 'player'|'board', index: number, subIndex?: number }
 
@@ -378,8 +380,41 @@ function App() {
   return (
     <div className={`app-container ${dealingMode ? 'dealing-mode' : ''}`}>
       <div className="top-pannel"></div>
-      <header>
-        <h1>Poker Odds Calculator</h1>
+      <header style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <h1>Poker Odds Calculator</h1>
+          <div
+            title="Hand Rankings"
+            onClick={() => setIsRankingModalOpen(true)}
+            style={{
+              width: '24px',
+              height: '24px',
+              borderRadius: '50%',
+              border: '2px solid var(--text-secondary)',
+              color: 'var(--text-secondary)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '14px',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              userSelect: 'none'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.borderColor = 'var(--accent-color)';
+              e.currentTarget.style.color = 'var(--accent-color)';
+              e.currentTarget.style.backgroundColor = 'rgba(59, 130, 246, 0.1)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = 'var(--text-secondary)';
+              e.currentTarget.style.color = 'var(--text-secondary)';
+              e.currentTarget.style.backgroundColor = 'transparent';
+            }}
+          >
+            ?
+          </div>
+        </div>
         <p>Calculate your equity instantly</p>
       </header>
 
@@ -459,6 +494,11 @@ function App() {
         onClose={() => setIsModalOpen(false)}
         onSelectCard={handleSelectCard}
         takenCards={takenCards}
+      />
+
+      <HandRankingModal
+        isOpen={isRankingModalOpen}
+        onClose={() => setIsRankingModalOpen(false)}
       />
     </div>
   )
