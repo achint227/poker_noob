@@ -376,4 +376,59 @@ export class Calculator {
             villains: villainsResults
         };
     }
+
+    calculateEquityAgainstRandom(heroCardsStr, boardCardsStr, numVillains, iterations = 1000) {
+        const heroCards = heroCardsStr.map(c => this.parseCard(c));
+        const boardCards = boardCardsStr.filter(c => c).map(c => this.parseCard(c));
+
+        let heroWins = 0;
+        let heroTies = 0;
+
+        for (let i = 0; i < iterations; i++) {
+            const deck = new Deck();
+            const knownCards = [...heroCards, ...boardCards];
+            deck.removeCards(knownCards);
+            deck.shuffle();
+
+            // Deal random hands to villains
+            const villainHands = [];
+            for (let v = 0; v < numVillains; v++) {
+                villainHands.push([deck.deal(), deck.deal()]);
+            }
+
+            // Deal remaining board
+            const currentBoard = [...boardCards];
+            while (currentBoard.length < 5) {
+                currentBoard.push(deck.deal());
+            }
+
+            const heroScore = this.evaluateHand([...heroCards, ...currentBoard]);
+
+            // Eval all villains
+            let maxScore = heroScore;
+            const villainScores = villainHands.map(hand => {
+                const s = this.evaluateHand([...hand, ...currentBoard]);
+                if (s > maxScore) maxScore = s;
+                return s;
+            });
+
+            // Check if hero wins or ties
+            const winners = [];
+            if (heroScore === maxScore) winners.push('hero');
+            villainScores.forEach((score, index) => {
+                if (score === maxScore) winners.push(index);
+            });
+
+            if (winners.length === 1 && winners[0] === 'hero') {
+                heroWins++;
+            } else if (winners.includes('hero')) {
+                heroTies++;
+            }
+        }
+
+        return {
+            win: (heroWins / iterations) * 100,
+            tie: (heroTies / iterations) * 100
+        };
+    }
 }

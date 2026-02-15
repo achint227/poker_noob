@@ -61,8 +61,20 @@ const Board = ({ cards, onCardClick, onRemove, tiePercent, dealingMode, onToggle
                     color: 'var(--text-secondary)',
                     textAlign: 'center'
                 }}>
-                    {tiePercent !== undefined && tiePercent !== null && (
-                        <span>Split: <strong style={{ color: 'var(--text-primary)' }}>{tiePercent.toFixed(1)}%</strong></span>
+                    {dealingMode && tiePercent !== undefined && tiePercent !== null && (
+                        <span style={{ display: 'inline-flex', alignItems: 'center' }}>
+                            Split:
+                            <strong style={{
+                                color: 'var(--text-primary)',
+                                width: '4.5rem', /* Fixed width to accommodate "100.0%" */
+                                display: 'inline-block',
+                                textAlign: 'left',
+                                paddingLeft: '0.25rem',
+                                fontVariantNumeric: 'tabular-nums'
+                            }}>
+                                {tiePercent.toFixed(1)}%
+                            </strong>
+                        </span>
                     )}
                 </div>
 
