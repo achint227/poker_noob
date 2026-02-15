@@ -1,0 +1,763 @@
+:root {
+    --bg-color: #0f172a;
+    --card-bg: #1e293b;
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    --accent-color: #3b82f6;
+    --accent-hover: #2563eb;
+    --danger-color: #ef4444;
+    --success-color: #22c55e;
+    --border-color: #334155;
+
+    --primary: var(--accent-color);
+    --slate-500: #64748b;
+    --slate-300: #cbd5e1;
+    --slate-400: #94a3b8;
+    --slate-700: #334155;
+
+    --card-width: 60px;
+    --card-height: 84px;
+    --suit-spade: #e2e8f0;
+    --suit-heart: #ef4444;
+    --suit-diamond: #3b82f6;
+    /* Blue diamonds for better accessibility/contrast in dark mode, or standard red */
+    --suit-club: #22c55e;
+    /* Green clubs or standard black (white in dark mode) */
+}
+
+/* Reset & Base */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-primary);
+    line-height: 1.5;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+}
+
+.app-container {
+    width: 100%;
+    max-width: 800px;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+header {
+    text-align: center;
+}
+
+header h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    background: linear-gradient(to right, #60a5fa, #a78bfa);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+header p {
+    color: var(--text-secondary);
+}
+
+/* Sections */
+section {
+    background-color: var(--card-bg);
+    padding: 1rem;
+    border-radius: 1rem;
+    border: 1px solid var(--border-color);
+}
+
+h2 {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+}
+
+/* Card Slots */
+.cards-container {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.card-slot {
+    width: var(--card-width);
+    height: var(--card-height);
+    background-color: rgba(255, 255, 255, 0.05);
+    border: 2px dashed var(--border-color);
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1.25rem;
+    transition: all 0.2s;
+    position: relative;
+    user-select: none;
+}
+
+.card-slot:hover {
+    border-color: var(--accent-color);
+    background-color: rgba(59, 130, 246, 0.1);
+}
+
+.card-slot.filled {
+    border-style: solid;
+    background-color: white;
+    color: black;
+    border: none;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.remove-card-x {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    width: 20px;
+    height: 20px;
+    background-color: var(--danger-color);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    z-index: 10;
+    transition: transform 0.1s;
+}
+
+.remove-card-x:hover {
+    transform: scale(1.1);
+    background-color: #dc2626;
+}
+
+.card-slot.selected {
+    border-color: var(--accent-color);
+    background-color: rgba(59, 130, 246, 0.1);
+}
+
+/* Suits Styling within slots */
+.card-slot[data-suit="s"] {
+    color: black;
+}
+
+.card-slot[data-suit="h"] {
+    color: #d93025;
+}
+
+.card-slot[data-suit="d"] {
+    color: #1a73e8;
+}
+
+.card-slot[data-suit="c"] {
+    color: #188038;
+}
+
+/* Player Section */
+.players-section {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    align-items: center;
+}
+
+.players-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    justify-content: center;
+    width: 100%;
+}
+
+.add-player-section {
+    margin-top: 1rem;
+}
+
+/* Ensure all player cards are uniform */
+.player-card {
+    flex: 0 0 auto;
+    width: fit-content;
+    background-color: var(--card-bg);
+    padding: 0.5rem;
+    border-radius: 1rem;
+    border: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    /* Fix for absolute positioning of remove buttons */
+}
+
+.player-card h2 {
+    font-size: 0.9rem;
+    margin-bottom: 0.25rem;
+    margin-top: 0;
+}
+
+.stats {
+    margin-top: 0.25rem;
+    width: 100%;
+}
+
+.stat-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.stat-row span:last-child {
+    color: var(--text-primary);
+    font-weight: 600;
+    font-family: monospace;
+    font-size: 1.1rem;
+}
+
+/* Controls */
+.controls {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-top: 1rem;
+}
+
+button {
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: 600;
+    border: none;
+    border-radius: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    transition: all 0.2s;
+    font-size: 1rem;
+}
+
+button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background-color: var(--border-color);
+    color: var(--text-secondary);
+}
+
+.btn-primary {
+    background-color: var(--accent-color);
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: var(--accent-hover);
+}
+
+.btn-secondary {
+    background-color: transparent;
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
+}
+
+.btn-secondary:hover {
+    border-color: var(--text-primary);
+    color: var(--text-primary);
+}
+
+.btn-danger {
+    background-color: transparent;
+    color: var(--danger-color);
+    border: 1px solid var(--danger-color);
+}
+
+.btn-danger:hover {
+    background-color: var(--danger-color);
+    color: white;
+}
+
+/* Modal */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+    backdrop-filter: blur(4px);
+    opacity: 1;
+    transition: opacity 0.2s;
+}
+
+.modal.hidden {
+    opacity: 0;
+    pointer-events: none;
+    display: none;
+    /* Fallback */
+}
+
+.modal-content {
+    background-color: var(--bg-color);
+    padding: 1.5rem;
+    border-radius: 1rem;
+    border: 1px solid var(--border-color);
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.close-modal {
+    background: none;
+    font-size: 1.5rem;
+    padding: 0.25rem;
+    line-height: 1;
+    color: var(--text-secondary);
+}
+
+.close-modal:hover {
+    color: white;
+}
+
+/* Interactive Modal & Big Card */
+.interactive-card-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 0;
+}
+
+/* Villain specific */
+.villains-container {
+    display: flex;
+    gap: 1rem;
+    flex: 1;
+    /* Allow it to grow/shrink in the flex parent */
+    flex-direction: column;
+    /* Stack vertically on mobile default */
+}
+
+@media (min-width: 600px) {
+    .villains-container {
+        flex-direction: row;
+        flex-wrap: wrap;
+        /* Allow wrapping so cards don't get tiny */
+    }
+}
+
+.villain-header {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    align-items: center;
+}
+
+/* Remove Villain Button - Styled like card-x */
+.remove-villain-btn {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    background-color: #ef4444;
+    color: white;
+    border: 2px solid var(--bg-color);
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    z-index: 10;
+    line-height: 1;
+    padding: 0;
+}
+
+.remove-villain-btn:hover {
+    background-color: #dc2626;
+    transform: scale(1.1);
+}
+
+.add-villain-section {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    /* Match player card dimensions roughly or just be a button area */
+    min-height: 100px;
+    width: 220px;
+    /* Match min-width of cards roughly */
+}
+
+.btn-outline {
+    background: transparent;
+    border: 2px dashed #64748b;
+    /* --slate-500 hardcoded */
+    color: var(--slate-300);
+    padding: 1rem 2rem;
+    border-radius: 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-outline:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    background-color: rgba(99, 102, 241, 0.05);
+    transform: translateY(-2px);
+}
+
+/* Stats Simplification */
+.equity-value {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--primary);
+    margin-top: 0.25rem;
+    text-shadow: none;
+    line-height: 1.25;
+    /* Good for readability */
+    text-align: center;
+    min-height: 1.25rem;
+    /* Reserve space for content */
+}
+
+.tie-tracker {
+    width: 100%;
+    grid-column: 1 / -1;
+    text-align: center;
+    color: var(--slate-400);
+    font-size: 1rem;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--slate-700);
+}
+
+.big-card {
+    width: 200px;
+    height: 280px;
+    background-color: white;
+    border-radius: 1rem;
+    position: relative;
+    padding: 1rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    user-select: none;
+    cursor: pointer;
+    transition: transform 0.1s;
+}
+
+.big-card:active {
+    transform: scale(0.98);
+}
+
+.big-card[data-suit="s"] {
+    color: black;
+}
+
+.big-card[data-suit="h"] {
+    color: #d93025;
+}
+
+.big-card[data-suit="d"] {
+    color: #1a73e8;
+}
+
+.big-card[data-suit="c"] {
+    color: #188038;
+}
+
+.card-top-left {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1;
+}
+
+.card-bottom-right {
+    position: absolute;
+    bottom: 1rem;
+    right: 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1;
+    transform: rotate(180deg);
+}
+
+.big-rank {
+    font-size: 2.5rem;
+    font-weight: 800;
+}
+
+.big-suit {
+    font-size: 2rem;
+}
+
+.card-center-suit {
+    font-size: 6rem;
+}
+
+.control-btn {
+    background: transparent;
+    border: 2px solid var(--border-color);
+    color: var(--text-primary);
+    font-size: 1.5rem;
+    width: 3rem;
+    height: 3rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.control-btn:hover {
+    border-color: var(--accent-color);
+    color: var(--accent-color);
+    background-color: rgba(59, 130, 246, 0.1);
+}
+
+.controls-guide {
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin-bottom: 1.5rem;
+}
+
+.controls-guide strong {
+    color: var(--text-primary);
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
+#confirm-card-btn {
+    width: 100%;
+    padding: 1rem;
+    font-size: 1.1rem;
+}
+
+/* Toggle Switch */
+/* Board Footer Toggle */
+/* Board Footer Toggle */
+.mode-toggle-compact .toggle-switch {
+    flex-shrink: 0;
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 24px;
+    background-color: var(--slate-700);
+    border-radius: 999px;
+    transition: all 0.3s ease;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.mode-toggle-compact .toggle-switch.on {
+    background-color: var(--primary);
+}
+
+.mode-toggle-compact .toggle-knob {
+    position: absolute;
+    height: 20px;
+    width: 20px;
+    left: 2px;
+    top: 2px;
+    bottom: auto;
+    background-color: white;
+    transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+    border-radius: 50%;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.mode-toggle-compact .toggle-switch.on .toggle-knob {
+    transform: translateX(20px);
+}
+
+.mode-toggle-compact:hover .toggle-switch {
+    background-color: var(--slate-500);
+}
+
+.mode-toggle-compact:hover .toggle-switch.on {
+    background-color: var(--accent-hover);
+}
+
+/* Hover Effects for Remove Buttons */
+.card-slot .remove-card-x,
+.player-card .remove-villain-btn {
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out;
+    pointer-events: none;
+}
+
+.card-slot:hover .remove-card-x,
+.player-card:hover .remove-villain-btn {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* Ensure they are still clickable/visible on mobile or if needed, but for now just hover */
+
+/* Previous Toggle CSS can be removed or kept if reused, but we use mode-toggle-compact now */
+.mode-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+    user-select: none;
+    background-color: var(--card-bg);
+    padding: 0.5rem 1rem;
+    border-radius: 2rem;
+    border: 1px solid var(--border-color);
+}
+
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 24px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--slate-700);
+    transition: .4s;
+    border-radius: 34px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked+.slider {
+    background-color: var(--accent-color);
+}
+
+input:checked+.slider:before {
+    transform: translateX(20px);
+}
+
+.toggle-label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.mode-toggle:hover .toggle-label {
+    color: var(--text-primary);
+}
+
+/* Disabled state for inputs */
+.app-container.dealing-mode .card-slot {
+    cursor: default;
+}
+
+/* Compact Player Card */
+.player-card.compact {
+    padding: 0.5rem;
+    min-width: unset;
+    max-width: fit-content;
+}
+
+.player-card.compact h2 {
+    font-size: 0.8rem;
+    margin-bottom: 0.25rem;
+}
+
+.player-card.compact .cards-container {
+    gap: 0.4rem;
+}
+
+/* 
+   User requested cards NOT be smaller. 
+   Removing the size overrides for .card-slot in compact mode.
+*/
+
+/* Winner Highlight */
+.player-card.winner {
+    border: 2px solid #ffd700;
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+    background: linear-gradient(to bottom, var(--card-bg), rgba(255, 215, 0, 0.05));
+}
+
+.hand-result {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    text-align: center;
+}
+
+.hand-description {
+    font-size: 0.85rem;
+    color: var(--text-primary);
+    font-weight: 500;
+    line-height: 1.2;
+}
+
+.winner-badge {
+    background-color: #ffd700;
+    color: black;
+    font-size: 0.7rem;
+    font-weight: 800;
+    padding: 2px 6px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
