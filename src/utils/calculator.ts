@@ -1,20 +1,45 @@
-import { Deck, Card } from './deck.js';
+import { Deck, Card } from './deck';
+
+export interface HandDetails {
+    score: number;
+    type: string;
+    description: string;
+    rank: number;
+    subRank?: number; // For Full House and Two Pair
+    kickers: number[];
+}
+
+export interface PlayerEquity {
+    win: number;
+    tie: number;
+}
+
+export interface EquityResult {
+    hero: PlayerEquity;
+    villains: PlayerEquity[];
+}
+
+interface NOfAKindResult {
+    rank: number;
+    kickers: number[];
+}
 
 export class Calculator {
+    RANKS: string;
+
     constructor() {
         this.RANKS = '23456789TJQKA';
     }
 
     // Convert card string to Card object
-    parseCard(cardStr) {
+    parseCard(cardStr: string | null | undefined): Card | null {
         if (!cardStr) return null;
         return new Card(cardStr[0], cardStr[1]);
     }
 
     // Evaluate the strength of a 5-7 card hand
     // Returns a score where higher is better.
-    // Score format: [HandRank, TieBreaker1, TieBreaker2, ...]
-    evaluateHand(cards) {
+    evaluateHand(cards: Card[]): number {
         if (cards.length < 5) return 0;
 
         // Sort cards by rank descending
@@ -85,8 +110,8 @@ export class Calculator {
             const remaining = ranks.filter(r => r !== pair1.rank);
             const pair2 = this.getNOfAKind(remaining, 2);
             if (pair2) {
-                const kicker = remaining.filter(r => r !== pair2.rank)[0];
-                return 2000000 + (pair1.rank * 1000) + (pair2.rank * 15) + kicker;
+                const kicker = remaining.find(r => r !== pair2.rank);
+                return 2000000 + (pair1.rank * 1000) + (pair2.rank * 15) + (kicker || 0);
             }
 
             // 1. One Pair
@@ -101,7 +126,7 @@ export class Calculator {
         return score;
     }
 
-    getHandDetails(cards) {
+    getHandDetails(cards: Card[]): HandDetails | null {
         if (cards.length < 5) return null;
 
         // Sort cards by rank descending
@@ -109,11 +134,11 @@ export class Calculator {
 
         const ranks = cards.map(c => c.value);
         const suits = cards.map(c => c.suit);
-        const rankNames = ['2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K', 'A'];
+        // We aren't using rankNames here, but keep if needed or remove.
         const fullRankNames = ['Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Jack', 'Queen', 'King', 'Ace'];
 
-        const getRankName = (val) => fullRankNames[val];
-        const getPluralRankName = (val) => {
+        const getRankName = (val: number) => fullRankNames[val];
+        const getPluralRankName = (val: number) => {
             if (val === 4) return 'Sixes'; // Fix for Sixes
             return fullRankNames[val] + 's';
         }
@@ -215,14 +240,14 @@ export class Calculator {
             const remaining = ranks.filter(r => r !== pair1.rank);
             const pair2 = this.getNOfAKind(remaining, 2);
             if (pair2) {
-                const kicker = remaining.filter(r => r !== pair2.rank)[0];
+                const kicker = remaining.find(r => r !== pair2.rank);
                 return {
-                    score: 2000000 + (pair1.rank * 1000) + (pair2.rank * 15) + kicker,
+                    score: 2000000 + (pair1.rank * 1000) + (pair2.rank * 15) + (kicker || 0),
                     type: 'Two Pair',
                     description: `Two Pair, ${getPluralRankName(pair1.rank)} and ${getPluralRankName(pair2.rank)}`,
                     rank: pair1.rank,
                     subRank: pair2.rank,
-                    kickers: [kicker]
+                    kickers: kicker !== undefined ? [kicker] : []
                 };
             }
 
@@ -250,16 +275,17 @@ export class Calculator {
         };
     }
 
-    getFlushSuit(suits) {
-        const counts = {};
+    getFlushSuit(suits: string[]): string | null {
+        const counts: Record<string, number> = {};
         for (const s of suits) counts[s] = (counts[s] || 0) + 1;
         for (const s in counts) if (counts[s] >= 5) return s;
         return null;
     }
 
-    getStraightHighRank(ranks) {
+    getStraightHighRank(ranks: number[]): number {
         // Unique ranks
         const unique = [...new Set(ranks)];
+        unique.sort((a, b) => b - a); // Ensure sorted descending
 
         // Check for 5 consecutive
         for (let i = 0; i <= unique.length - 5; i++) {
@@ -267,8 +293,6 @@ export class Calculator {
         }
 
         // Special case: Wheel (A-5) -> A, 5, 4, 3, 2. A is 12, 2 is 0.
-        // Elements in unique are sorted descending.
-        // Check if A(12), 5(3), 4(2), 3(1), 2(0) exist
         if (unique.includes(12) && unique.includes(3) && unique.includes(2) && unique.includes(1) && unique.includes(0)) {
             return 3; // High card is 5 (index 3)
         }
@@ -276,20 +300,11 @@ export class Calculator {
         return -1;
     }
 
-    getNOfAKind(ranks, n) {
-        const counts = {};
+    getNOfAKind(ranks: number[], n: number): NOfAKindResult | null {
+        const counts: Record<number, number> = {};
         for (const r of ranks) counts[r] = (counts[r] || 0) + 1;
 
-        for (const r in counts) {
-            if (counts[r] === n) {
-                const rankVal = parseInt(r);
-                const kickers = ranks.filter(x => x !== rankVal);
-                return { rank: rankVal, kickers: kickers };
-            }
-        }
-        // If searching for pair, we might have trips/quads that contain a pair, 
-        // but this logic assumes strict search for N. 
-        // Better: iterate ranks descending
+        // Iterate ranks descending
         for (let r = 12; r >= 0; r--) {
             if (counts[r] >= n) {
                 const kickers = ranks.filter(x => x !== r);
@@ -300,12 +315,10 @@ export class Calculator {
         return null;
     }
 
-    calculateEquity(heroCardsStr, villainsCardsStr, boardCardsStr, iterations = 1000) {
-        const heroCards = heroCardsStr.map(c => this.parseCard(c));
-        // villainsCardsStr is array of arrays of strings: [['As', 'Ks'], ['Qh', 'Jh']]
-        // Turn into array of arrays of Cards
-        const villainsCards = villainsCardsStr.map(hand => hand.map(c => this.parseCard(c)));
-        const boardCards = boardCardsStr.filter(c => c).map(c => this.parseCard(c));
+    calculateEquity(heroCardsStr: string[], villainsCardsStr: string[][], boardCardsStr: string[], iterations = 1000): EquityResult {
+        const heroCards = heroCardsStr.map(c => this.parseCard(c)).filter(c => c !== null) as Card[];
+        const villainsCards = villainsCardsStr.map(hand => hand.map(c => this.parseCard(c)).filter(c => c !== null) as Card[]);
+        const boardCards = boardCardsStr.map(c => this.parseCard(c)).filter(c => c !== null) as Card[];
 
         let heroWins = 0;
         let heroTies = 0;
@@ -323,7 +336,8 @@ export class Calculator {
             // Deal remaining board
             const currentBoard = [...boardCards];
             while (currentBoard.length < 5) {
-                currentBoard.push(deck.deal());
+                const card = deck.deal();
+                if (card) currentBoard.push(card);
             }
 
             const heroScore = this.evaluateHand([...heroCards, ...currentBoard]);
@@ -339,7 +353,7 @@ export class Calculator {
             }
 
             // Check who has maxScore
-            const winners = [];
+            const winners: (number | 'hero')[] = [];
             if (heroScore === maxScore) winners.push('hero');
             villainScores.forEach((score, index) => {
                 if (score === maxScore) winners.push(index);
@@ -350,10 +364,10 @@ export class Calculator {
                 if (winners[0] === 'hero') {
                     heroWins++;
                 } else {
-                    villainsStats[winners[0]].wins++;
+                    villainsStats[winners[0] as number].wins++;
                 }
             } else {
-                // Tie logic: everyone with maxScore ties
+                // Tie logic
                 if (winners.includes('hero')) heroTies++;
                 villainScores.forEach((score, index) => {
                     if (score === maxScore) villainsStats[index].ties++;
@@ -377,9 +391,9 @@ export class Calculator {
         };
     }
 
-    calculateEquityAgainstRandom(heroCardsStr, boardCardsStr, numVillains, iterations = 1000) {
-        const heroCards = heroCardsStr.map(c => this.parseCard(c));
-        const boardCards = boardCardsStr.filter(c => c).map(c => this.parseCard(c));
+    calculateEquityAgainstRandom(heroCardsStr: string[], boardCardsStr: string[], numVillains: number, iterations = 1000): PlayerEquity {
+        const heroCards = heroCardsStr.map(c => this.parseCard(c)).filter(c => c !== null) as Card[];
+        const boardCards = boardCardsStr.map(c => this.parseCard(c)).filter(c => c !== null) as Card[];
 
         let heroWins = 0;
         let heroTies = 0;
@@ -391,15 +405,18 @@ export class Calculator {
             deck.shuffle();
 
             // Deal random hands to villains
-            const villainHands = [];
+            const villainHands: Card[][] = [];
             for (let v = 0; v < numVillains; v++) {
-                villainHands.push([deck.deal(), deck.deal()]);
+                const c1 = deck.deal();
+                const c2 = deck.deal();
+                if (c1 && c2) villainHands.push([c1, c2]);
             }
 
             // Deal remaining board
             const currentBoard = [...boardCards];
             while (currentBoard.length < 5) {
-                currentBoard.push(deck.deal());
+                const card = deck.deal();
+                if (card) currentBoard.push(card);
             }
 
             const heroScore = this.evaluateHand([...heroCards, ...currentBoard]);
@@ -413,7 +430,7 @@ export class Calculator {
             });
 
             // Check if hero wins or ties
-            const winners = [];
+            const winners: (number | 'hero')[] = [];
             if (heroScore === maxScore) winners.push('hero');
             villainScores.forEach((score, index) => {
                 if (score === maxScore) winners.push(index);

@@ -1,7 +1,15 @@
 import React from 'react';
 import './NumericStepper.css';
 
-const NumericStepper = ({ value, min, max, onChange, label }) => {
+interface NumericStepperProps {
+    value: number;
+    min: number;
+    max: number;
+    onChange: (value: number) => void;
+    label?: string;
+}
+
+const NumericStepper: React.FC<NumericStepperProps> = ({ value, min, max, onChange, label }) => {
     const handleDecrement = () => {
         if (value > min) {
             onChange(value - 1);

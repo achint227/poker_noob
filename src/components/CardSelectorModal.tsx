@@ -4,30 +4,48 @@ import Card from './Card';
 const RANKS = ['2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K', 'A'];
 const SUITS = ['s', 'h', 'd', 'c'];
 
-const CardSelectorModal = ({ isOpen, onClose, onSelectCard, takenCards = [] }) => {
+interface CardSelectorModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    onSelectCard: (card: string) => void;
+    takenCards?: string[];
+}
+
+const CardSelectorModal: React.FC<CardSelectorModalProps> = ({ isOpen, onClose, onSelectCard, takenCards = [] }) => {
     const [rankIndex, setRankIndex] = useState(12); // Default 'A'
     const [suitIndex, setSuitIndex] = useState(0); // Default 's'
 
     // Reset or defaults when opening
     useEffect(() => {
         if (isOpen) {
-            // Find next available card starting from current selection logic
-            // We try to keep the current suitIndex if possible
+            // Logic to find a default available card...
+            // Note: The logic in the JS file seemed incomplete/broken in the loop (it defined variables but didn't use them correctly to set state, or I misread).
+            // Actually, checking the JS:
+            /*
+            for (let sOffset = 0; sOffset < 4; sOffset++) {
+                // ...
+                for (let rIdx = 12; rIdx >= 0; rIdx--) {
+                   // ...
+                   if (!takenCards.includes(code)) {
+                        setRankIndex(rIdx);
+                        setSuitIndex(sIdx);
+                        found = true;
+                        break;
+                   }
+                }
+                if (found) break;
+            }
+            */
+            // I will implement this logic.
+
             let found = false;
-            let searchSuitIndex = suitIndex;
-            let searchRankIndex = 12; // Start from A
-
-            // Try to find a card in the current/default suit first
-            // Simply iterate all 52 cards starting from A of current suit, then rotate suits
-
-            // To simplify: let's just loop 4 suits * 13 ranks
-            // But user wants "in the selected suit". So we prioritize that.
+            // Start search from current selection if we can, but simpler to just search all.
+            // Or use the logic to pick a default.
 
             for (let sOffset = 0; sOffset < 4; sOffset++) {
-                const sIdx = (searchSuitIndex + sOffset) % 4;
+                const sIdx = (suitIndex + sOffset) % 4;
                 const suitStr = SUITS[sIdx];
 
-                // Try ranks descending
                 for (let rIdx = 12; rIdx >= 0; rIdx--) {
                     const rankStr = RANKS[rIdx];
                     const code = rankStr + suitStr;
@@ -41,7 +59,7 @@ const CardSelectorModal = ({ isOpen, onClose, onSelectCard, takenCards = [] }) =
                 if (found) break;
             }
         }
-    }, [isOpen, takenCards]); // Depend on takenCards so it updates if state changes while open (unlikely but safe)
+    }, [isOpen, takenCards]);
 
     if (!isOpen) return null;
 
@@ -54,7 +72,7 @@ const CardSelectorModal = ({ isOpen, onClose, onSelectCard, takenCards = [] }) =
         setSuitIndex((prev) => (prev + 1) % 4);
     };
 
-    const handleChangeRank = (delta) => {
+    const handleChangeRank = (delta: number) => {
         setRankIndex((prev) => {
             let newIndex = prev + delta;
             if (newIndex < 0) newIndex = RANKS.length - 1;

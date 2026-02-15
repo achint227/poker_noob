@@ -1,7 +1,19 @@
 import React from 'react';
 import CardSlot from './CardSlot';
 
-const Board = ({ cards, onCardClick, onRemove, tiePercent, dealingMode, onToggleMode, onDeal, onReset, gameStage }) => {
+interface BoardProps {
+    cards: (string | null)[];
+    onCardClick: (index: number) => void;
+    onRemove?: (index: number) => void;
+    tiePercent: number | null | undefined;
+    dealingMode: boolean;
+    onToggleMode: () => void;
+    onDeal: () => void;
+    onReset: () => void;
+    gameStage: string;
+}
+
+const Board: React.FC<BoardProps> = ({ cards, onCardClick, onRemove, tiePercent, dealingMode, onToggleMode, onDeal, onReset, gameStage }) => {
     // get 5 slots, fill with cards or null
     const slots = Array(5).fill(null).map((_, i) => cards[i] || null);
 
@@ -30,7 +42,7 @@ const Board = ({ cards, onCardClick, onRemove, tiePercent, dealingMode, onToggle
                         key={index}
                         card={card}
                         onClick={() => onCardClick(index)}
-                        onRemove={onRemove ? () => onRemove(index) : null}
+                        onRemove={onRemove ? () => onRemove(index) : undefined}
                     />
                 ))}
             </div>

@@ -1,7 +1,25 @@
 import React from 'react';
 import CardSlot from './CardSlot';
 
-const Hand = ({
+export interface HandResult {
+    description: string;
+    isWinner: boolean;
+    isSplit: boolean;
+}
+
+interface HandProps {
+    cards: (string | null)[];
+    label: string;
+    winPercent: number | null;
+    handResult: HandResult | null;
+    onCardClick: (index: number) => void;
+    onRemove?: (index: number) => void;
+    onRemoveVillain?: () => void;
+    isHero?: boolean;
+    compact?: boolean;
+}
+
+const Hand: React.FC<HandProps> = ({
     cards,
     label,
     winPercent,
@@ -31,7 +49,7 @@ const Hand = ({
                         key={index}
                         card={card}
                         onClick={() => onCardClick(index)}
-                        onRemove={onRemove ? () => onRemove(index) : null}
+                        onRemove={onRemove ? () => onRemove(index) : undefined}
                     />
                 ))}
             </div>

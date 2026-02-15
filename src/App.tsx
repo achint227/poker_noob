@@ -1,6 +1,6 @@
-import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
-import { Calculator } from './utils/calculator'
-import Hand from './components/Hand'
+import { useState, useEffect, useMemo, useRef } from 'react'
+import { Calculator, HandDetails, PlayerEquity } from './utils/calculator'
+import Hand, { HandResult } from './components/Hand'
 import Board from './components/Board'
 import CardSelectorModal from './components/CardSelectorModal'
 import { Deck } from './utils/deck'
@@ -11,21 +11,21 @@ import './index.css'
 const calculator = new Calculator();
 
 function App() {
-  const [totalPlayers, setTotalPlayers] = useState(2);
+  const [totalPlayers, setTotalPlayers] = useState<number>(2);
 
-  const [players, setPlayers] = useState([[null, null], [null, null]]); // Start with 2 players
-  const [board, setBoard] = useState([null, null, null, null, null]);
-  const [gameStage, setGameStage] = useState('idle'); // idle, preflop, flop, turn, river
-  const [dealingMode, setDealingMode] = useState(false);
+  const [players, setPlayers] = useState<(string | null)[][]>([[null, null], [null, null]]); // Start with 2 players
+  const [board, setBoard] = useState<(string | null)[]>([null, null, null, null, null]);
+  const [gameStage, setGameStage] = useState<string>('idle'); // idle, preflop, flop, turn, river
+  const [dealingMode, setDealingMode] = useState<boolean>(false);
 
-  const deckRef = useRef(new Deck());
+  const deckRef = useRef<Deck>(new Deck());
 
-  const [results, setResults] = useState(null);
-  const [handResults, setHandResults] = useState([]); // Array of { score, type, description, isWinner }
+  const [results, setResults] = useState<(PlayerEquity | null)[] | null>(null);
+  const [handResults, setHandResults] = useState<(HandResult | null)[]>([]);
 
   // Modal State
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingSlot, setEditingSlot] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [editingSlot, setEditingSlot] = useState<{ type: 'player' | 'board', index: number, subIndex?: number } | null>(null);
   // editingSlot: { type: 'player'|'board', index: number, subIndex?: number }
 
 
@@ -39,10 +39,10 @@ function App() {
 
   const calculateOdds = () => {
     // Valid players must have 2 cards
-    const validPlayers = []; // array of { cards, index }
+    const validPlayers: { cards: string[]; index: number }[] = [];
 
     players.forEach((hand, idx) => {
-      const cards = hand.filter(c => c);
+      const cards = hand.filter(c => c) as string[];
       if (cards.length === 2) {
         validPlayers.push({ cards, index: idx });
       }
@@ -57,7 +57,7 @@ function App() {
       }
     } else {
       // Manual mode: Need Hero to have cards
-      const heroCards = players[0].filter(c => c);
+      const heroCards = players[0].filter(c => c) as string[];
       if (heroCards.length !== 2) {
         setResults(null);
         return;
@@ -65,8 +65,8 @@ function App() {
     }
 
     // Check duplicates common to both modes
-    const allPlayerCards = dealingMode ? validPlayers.flatMap(p => p.cards) : players[0].filter(c => c);
-    const allCards = [...allPlayerCards, ...board.filter(c => c)];
+    const allPlayerCards = dealingMode ? validPlayers.flatMap(p => p.cards) : (players[0].filter(c => c) as string[]);
+    const allCards = [...allPlayerCards, ...board.filter(c => c) as string[]];
     const unique = new Set(allCards);
     if (unique.size !== allCards.length) {
       setResults(null);
@@ -82,11 +82,11 @@ function App() {
         const heroCards = heroConfig.cards;
         const villainHands = villainConfigs.map(v => v.cards);
 
-        const boardCards = board.filter(c => c);
+        const boardCards = board.filter(c => c) as string[];
 
         const res = calculator.calculateEquity(heroCards, villainHands, boardCards, 5000);
 
-        const newResults = Array(players.length).fill(null);
+        const newResults: (PlayerEquity | null)[] = Array(players.length).fill(null);
         newResults[heroConfig.index] = res.hero;
         res.villains.forEach((r, i) => {
           const originalIdx = villainConfigs[i].index;
@@ -96,8 +96,8 @@ function App() {
         setResults(newResults);
       } else {
         // Manual "Hero vs Random" Mode
-        const heroCards = players[0].filter(c => c);
-        const boardCards = board.filter(c => c);
+        const heroCards = players[0].filter(c => c) as string[];
+        const boardCards = board.filter(c => c) as string[];
         const numOpponents = totalPlayers - 1;
 
         if (numOpponents < 1) {
@@ -109,7 +109,7 @@ function App() {
 
         // Results array: [HeroWin]
         // We only show result for Player 0
-        const newResults = Array(players.length).fill(null);
+        const newResults: (PlayerEquity | null)[] = Array(players.length).fill(null);
         newResults[0] = res;
         setResults(newResults);
       }
@@ -152,42 +152,51 @@ function App() {
       setHandResults([]);
 
       // Deal to players (2 cards each)
-      const newPlayers = players.map(() => [deck.deal().toString(), deck.deal().toString()]);
+      const newPlayers = players.map(() => {
+        const c1 = deck.deal();
+        const c2 = deck.deal();
+        return [c1 ? c1.toString() : null, c2 ? c2.toString() : null] as (string | null)[];
+      });
       setPlayers(newPlayers);
     }
     else if (gameStage === 'preflop') {
       // Deal Flop (3 cards)
       setGameStage('flop');
       const newBoard = [...board];
-      newBoard[0] = deck.deal().toString();
-      newBoard[1] = deck.deal().toString();
-      newBoard[2] = deck.deal().toString();
+      const c1 = deck.deal();
+      const c2 = deck.deal();
+      const c3 = deck.deal();
+      if (c1) newBoard[0] = c1.toString();
+      if (c2) newBoard[1] = c2.toString();
+      if (c3) newBoard[2] = c3.toString();
       setBoard(newBoard);
     }
     else if (gameStage === 'flop') {
       // Deal Turn (1 card)
       setGameStage('turn');
       const newBoard = [...board];
-      newBoard[3] = deck.deal().toString();
+      const c = deck.deal();
+      if (c) newBoard[3] = c.toString();
       setBoard(newBoard);
     }
     else if (gameStage === 'turn') {
       // Deal River (1 card)
       setGameStage('river');
       const newBoard = [...board];
-      newBoard[4] = deck.deal().toString();
+      const c = deck.deal();
+      if (c) newBoard[4] = c.toString();
       setBoard(newBoard);
     }
   };
 
   // Actions
-  const handleSlotClick = (type, index, subIndex = 0) => {
+  const handleSlotClick = (type: 'player' | 'board', index: number, subIndex = 0) => {
     if (dealingMode) return; // Disable manual edits
     setEditingSlot({ type, index, subIndex });
     setIsModalOpen(true);
   };
 
-  const handleSelectCard = (card) => {
+  const handleSelectCard = (card: string) => {
     if (!editingSlot) return;
     const { type, index, subIndex } = editingSlot;
 
@@ -198,26 +207,27 @@ function App() {
     } else if (type === 'player') {
       const newPlayers = [...players];
       newPlayers[index] = [...newPlayers[index]];
-      newPlayers[index][subIndex] = card;
+      if (subIndex !== undefined) {
+        newPlayers[index][subIndex] = card;
+      }
       setPlayers(newPlayers);
     }
     setIsModalOpen(false);
   };
 
-  const handleRemoveCard = (type, index, subIndex) => {
+  const handleRemoveCard = (type: 'player' | 'board', index: number, subIndex?: number) => {
     if (dealingMode) return;
     if (type === 'board') {
       const newBoard = [...board];
       newBoard[index] = null;
       setBoard(newBoard);
-    } else if (type === 'player') {
+    } else if (type === 'player' && subIndex !== undefined) {
       const newPlayers = [...players];
       newPlayers[index][subIndex] = null;
       setPlayers(newPlayers);
     }
   }
 
-  // Calculate final hand details for display (only on River or when 5 cards are on board)
   // Calculate final hand details for display (only on River or when 5 cards are on board)
   useEffect(() => {
     // Only calculate accurate hand descriptions/winner in Dealing Mode
@@ -227,18 +237,27 @@ function App() {
       return;
     }
 
-    const boardCards = board.filter(c => c);
+    const boardCards = board.filter(c => c) as string[];
 
     // Trigger if we are effectively at the "River" (5 board cards)
     if (boardCards.length === 5) {
-      const currentBoard = boardCards.map(c => calculator.parseCard(c));
+      const currentBoard = boardCards.map(c => calculator.parseCard(c)).filter(c => c !== null);
 
       // Calculate details for each player
       const details = players.map(hand => {
-        const cards = hand.filter(c => c).map(c => calculator.parseCard(c));
+        const cards = hand.filter(c => c).map(c => calculator.parseCard(c)).filter(c => c !== null);
         if (cards.length !== 2) return null;
 
-        const fullHand = [...cards, ...currentBoard];
+        // Ensure types align - parseCard returns Card | null. Filters remove nulls.
+        // We need to cast or ensure TypeScript knows they are Cards.
+        // Since we logic-filter above, we can assume non-null.
+
+        // Actually calculator.parseCard can return null.
+        // Let's refine the map.
+        const validCards = cards as unknown as import('./utils/deck').Card[];
+        const validBoard = currentBoard as unknown as import('./utils/deck').Card[];
+
+        const fullHand = [...validCards, ...validBoard];
         const det = calculator.getHandDetails(fullHand);
         return det;
       });
@@ -249,6 +268,7 @@ function App() {
         if (d && d.score > maxScore) maxScore = d.score;
       });
 
+      // const winnersCount = details.filter(d => d && d.score === maxScore).length;
       const winnersCount = details.filter(d => d && d.score === maxScore).length;
       const isSplit = winnersCount > 1;
 
@@ -263,16 +283,16 @@ function App() {
         if (isWinner && !isSplit) {
           // Find the runner-up (best loser)
           let runnerUpScore = -1;
-          let bestLoser = null;
+          let bestLoser: HandDetails | null = null;
 
-          details.forEach(other => {
+          for (const other of details) {
             if (other && other.score < maxScore) {
               if (other.score > runnerUpScore) {
                 runnerUpScore = other.score;
                 bestLoser = other;
               }
             }
-          });
+          }
 
           if (bestLoser) {
             // Check if runner-up has same hand type/ranks
@@ -285,7 +305,8 @@ function App() {
               for (let i = 0; i < d.kickers.length; i++) {
                 const myKicker = d.kickers[i];
                 // safely access loser kicker (default to -1 if missing, causing myKicker to win)
-                const theirKicker = (bestLoser.kickers && bestLoser.kickers[i] !== undefined) ? bestLoser.kickers[i] : -1;
+                const loserKickers = bestLoser.kickers;
+                const theirKicker = (loserKickers && loserKickers[i] !== undefined) ? loserKickers[i] : -1;
 
                 if (myKicker > theirKicker) {
                   const kName = fullRankNames[myKicker];
@@ -302,7 +323,7 @@ function App() {
           description: description,
           isWinner: isWinner,
           isSplit: isSplit && isWinner
-        };
+        } as HandResult;
       });
 
       setHandResults(finalResults);
@@ -318,7 +339,7 @@ function App() {
     }
   };
 
-  const handleRemovePlayer = (index) => {
+  const handleRemovePlayer = (index: number) => {
     // Enabled in dealing mode per user request
     if (players.length > 2) {
       const newPlayers = players.filter((_, i) => i !== index);
@@ -337,12 +358,21 @@ function App() {
 
   // Computed for Modal
   const takenCards = useMemo(() => {
-    const t = [];
+    const t: string[] = [];
     players.flat().forEach(c => c && t.push(c));
     board.forEach(c => c && t.push(c));
     return t;
   }, [players, board]);
 
+  // Handle tie percent extraction safely
+  // The structure of 'results' is (PlayerEquity | null)[]
+  // We want to find a tie percentage if available.
+  // In manual mode, results[0] is the hero.
+  // In dealing mode, we might just grab the first valid result's tie (since ties are equal for all involved usually, but here 'tie' means probability of tie).
+  // Actually, 'tie' is the same for everyone in manual mode (hero ties vs random).
+  // In dealing mode, tie probability might differ? No, usually not for the shared pot, but equity tie % is specific to the player tying with others.
+  // The 'tiePercent' prop in Board expects a single number.
+  // Let's take the first non-null result's tie.
   const tiePct = results && results.find(r => r)?.tie;
 
   return (
@@ -390,11 +420,11 @@ function App() {
                   key={i}
                   label={`Player ${i + 1}`}
                   cards={hand}
-                  winPercent={results && results[i] ? results[i].win : null}
+                  winPercent={results && results[i] ? results[i]!.win : null}
                   handResult={handResults[i]}
                   onCardClick={(cardIdx) => handleSlotClick('player', i, cardIdx)}
                   onRemove={(cardIdx) => handleRemoveCard('player', i, cardIdx)}
-                  onRemoveVillain={players.length > 2 ? () => handleRemovePlayer(i) : null}
+                  onRemoveVillain={players.length > 2 ? () => handleRemovePlayer(i) : undefined}
                   isHero={false} // Removed "hero" distinction for styling
                   compact={false} // Always use full size for consistency
                 />
@@ -405,11 +435,11 @@ function App() {
                 key={0}
                 label="Me"
                 cards={players[0]}
-                winPercent={results && results[0] ? results[0].win : null}
+                winPercent={results && results[0] ? results[0]!.win : null}
                 handResult={handResults[0]}
                 onCardClick={(cardIdx) => handleSlotClick('player', 0, cardIdx)}
                 onRemove={(cardIdx) => handleRemoveCard('player', 0, cardIdx)}
-                onRemoveVillain={null}
+                onRemoveVillain={undefined}
                 isHero={true}
                 compact={false}
               />
