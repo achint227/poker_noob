@@ -448,4 +448,67 @@ export class Calculator {
             tie: (heroTies / iterations) * 100
         };
     }
+
+    getNuts(boardCardsStr: string[], heroCardsStr?: string[]): HandDetails | null {
+        // Convert board strings to Card objects
+        const board = boardCardsStr.map(c => this.parseCard(c)).filter(c => c !== null) as Card[];
+
+        if (board.length !== 5) return null;
+
+        const allCards: Card[] = [];
+        const suits = ['s', 'h', 'd', 'c'];
+        const ranks = '23456789TJQKA'.split('');
+
+        // Generate all 52 cards
+        for (const s of suits) {
+            for (const r of ranks) {
+                allCards.push(new Card(r, s));
+            }
+        }
+
+        // Parse Hero Cards if present
+        const heroCards = heroCardsStr
+            ? heroCardsStr.map(c => this.parseCard(c)).filter(c => c !== null) as Card[]
+            : [];
+
+        // Filter out board cards AND hero cards to get available hole cards for villains
+        const availableCards = allCards.filter(c => {
+            const isBoard = board.some(b => b.toString() === c.toString());
+            const isHero = heroCards.some(h => h.toString() === c.toString());
+            return !isBoard && !isHero;
+        });
+
+        let maxScore = -1;
+        let bestHoles: [Card, Card] | null = null;
+
+        // 1. Evaluate hypothetical optimal villain hands
+        for (let i = 0; i < availableCards.length; i++) {
+            for (let j = i + 1; j < availableCards.length; j++) {
+                const hole1 = availableCards[i];
+                const hole2 = availableCards[j];
+
+                const score = this.evaluateHand([...board, hole1, hole2]);
+                if (score > maxScore) {
+                    maxScore = score;
+                    bestHoles = [hole1, hole2];
+                }
+            }
+        }
+
+        // 2. Compare with Hero's hand (if valid)
+        // If Hero has a better hand than any possible villain, Hero has the nuts.
+        if (heroCards.length === 2) {
+            const heroScore = this.evaluateHand([...board, ...heroCards]);
+            // Use >= to favor Hero if tied
+            if (heroScore >= maxScore) {
+                maxScore = heroScore;
+                bestHoles = [heroCards[0], heroCards[1]];
+            }
+        }
+
+        if (bestHoles) {
+            return this.getHandDetails([...board, bestHoles[0], bestHoles[1]]);
+        }
+        return null;
+    }
 }

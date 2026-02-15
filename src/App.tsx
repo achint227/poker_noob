@@ -23,6 +23,7 @@ function App() {
 
   const [results, setResults] = useState<(PlayerEquity | null)[] | null>(null);
   const [handResults, setHandResults] = useState<(HandResult | null)[]>([]);
+  const [nuts, setNuts] = useState<HandDetails | null>(null);
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
@@ -35,6 +36,7 @@ function App() {
   useEffect(() => {
     const timer = setTimeout(() => {
       calculateOdds();
+      calculateNuts();
     }, 500);
     return () => clearTimeout(timer);
   }, [players, board, totalPlayers, dealingMode]);
@@ -119,6 +121,23 @@ function App() {
     } catch (e) {
       console.error(e);
       setResults(null);
+    }
+  };
+
+  const calculateNuts = () => {
+    if (!dealingMode) {
+      const boardCards = board.filter(c => c) as string[];
+      if (boardCards.length === 5) {
+        // Pass Hero cards to getNuts to calculate accurate nuts considering blocked cards
+        const heroCards = players.length > 0 ? (players[0].filter(c => c) as string[]) : undefined;
+        // We need to pass hero cards only if they are valid (2 cards)? getNuts handles partial.
+        const n = calculator.getNuts(boardCards, heroCards);
+        setNuts(n);
+      } else {
+        setNuts(null);
+      }
+    } else {
+      setNuts(null);
     }
   };
 
@@ -432,6 +451,20 @@ function App() {
             onReset={handleReset}
             gameStage={gameStage}
           />
+          {nuts && !dealingMode && (
+            <div style={{
+              textAlign: 'center',
+              marginTop: '1rem',
+              padding: '0.5rem 1rem',
+              background: 'rgba(255, 255, 255, 0.05)',
+              borderRadius: '8px',
+              display: 'inline-block',
+              border: '1px solid rgba(255, 255, 255, 0.1)'
+            }}>
+              <span style={{ color: 'var(--text-secondary)', marginRight: '0.5rem' }}>Nuts:</span>
+              <span style={{ fontWeight: 'bold', color: '#fbbf24' }}>{nuts.description}</span>
+            </div>
+          )}
         </div>
 
         {/* Players Grid */}
