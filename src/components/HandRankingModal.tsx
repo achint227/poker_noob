@@ -65,43 +65,77 @@ const HandRankingModal: React.FC<HandRankingModalProps> = ({ isOpen, onClose }) 
     return (
         <div className="modal" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
             <div className="modal-content" style={{ maxWidth: '800px', maxHeight: '90vh', overflowY: 'auto' }}>
-                <div className="modal-header" style={{ position: 'relative', justifyContent: 'center' }}>
-                    <h3 style={{ margin: 0 }}>Hand Rankings</h3>
-                    <button className="close-modal" onClick={onClose} style={{ position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)' }}>&times;</button>
+            <div className="modal-header" style={{ position: 'relative', justifyContent: 'center', flexDirection: 'column', alignItems: 'center', paddingBottom: '1.5rem', borderBottom: '1px solid var(--border-color)' }}>
+                    <h2 style={{ margin: 0, background: 'linear-gradient(to right, #60a5fa, #a78bfa)', backgroundClip: 'text', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Poker Hand Rankings</h2>
+                    <button className="close-modal" onClick={onClose} style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)' }}>&times;</button>
                 </div>
 
-                <div className="hand-rankings-list">
-                    {rankings.map((rank, index) => (
-                        <div key={index} className="ranking-item" style={{
-                            padding: '1rem 0',
-                            borderBottom: index < rankings.length - 1 ? '1px solid var(--border-color)' : 'none',
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                            flexWrap: 'wrap',
-                            gap: '1rem'
-                        }}>
-                            <div className="ranking-name-container">
-                                <div style={{ fontWeight: 'bold', color: 'var(--primary)', fontSize: '1.1rem', display: 'flex', alignItems: 'center' }}>
-                                    <span style={{ marginRight: '0.5rem', color: 'var(--text-secondary)' }}>{index + 1}.</span>
-                                    {rank.name}
-                                    <span style={{ fontSize: '0.8rem', marginLeft: '0.5rem', opacity: 0.7 }}>ⓘ</span>
-                                </div>
-
-                                <div className="ranking-description">
-                                    {rank.desc}
-                                </div>
-                            </div>
-
-                            <div style={{ display: 'flex', gap: '4px', transform: 'scale(0.8)', transformOrigin: 'right center' }}>
-                                {rank.sample.map((card, i) => (
-                                    <div key={i} style={{ pointerEvents: 'none' }}>
-                                        <CardSlot card={card} />
+                <div className="hand-rankings-list" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                        {rankings.slice(0, 5).map((rank, index) => (
+                            <div key={index} className="ranking-item" style={{
+                                padding: '0.75rem',
+                                borderBottom: index < 4 ? '1px solid var(--border-color)' : 'none',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                textAlign: 'center',
+                                gap: '0.5rem'
+                            }}>
+                                <div className="ranking-name-container" style={{ width: '100%' }}>
+                                    <div style={{ fontWeight: 'bold', color: 'var(--primary)', fontSize: '1.1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem' }}>
+                                        <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '28px', height: '28px', backgroundColor: 'var(--primary)', color: 'white', borderRadius: '50%', fontSize: '0.9rem', fontWeight: 'bold' }}>{index + 1}</span>
+                                        {rank.name}
                                     </div>
-                                ))}
+
+                                    <div className="ranking-description" style={{ fontSize: '0.9rem', marginTop: '0.5rem' }}>
+                                        {rank.desc}
+                                    </div>
+                                </div>
+
+                                <div style={{ display: 'flex', gap: '4px', transform: 'scale(0.8)' }}>
+                                    {rank.sample.map((card, i) => (
+                                        <div key={i} style={{ pointerEvents: 'none' }}>
+                                            <CardSlot card={card} />
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
-                        </div>
-                    ))}
+                        ))}
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                        {rankings.slice(5).map((rank, index) => (
+                            <div key={index + 5} className="ranking-item" style={{
+                                padding: '0.75rem',
+                                borderBottom: index < 4 ? '1px solid var(--border-color)' : 'none',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                textAlign: 'center',
+                                gap: '0.5rem'
+                            }}>
+                                <div className="ranking-name-container" style={{ width: '100%' }}>
+                                    <div style={{ fontWeight: 'bold', color: 'var(--primary)', fontSize: '1.1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem' }}>
+                                        <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '28px', height: '28px', backgroundColor: 'var(--primary)', color: 'white', borderRadius: '50%', fontSize: '0.9rem', fontWeight: 'bold' }}>{index + 6}</span>
+                                        {rank.name}
+                                    </div>
+
+                                    <div className="ranking-description" style={{ fontSize: '0.9rem', marginTop: '0.5rem' }}>
+                                        {rank.desc}
+                                    </div>
+                                </div>
+
+                                <div style={{ display: 'flex', gap: '4px', transform: 'scale(0.8)' }}>
+                                    {rank.sample.map((card, i) => (
+                                        <div key={i} style={{ pointerEvents: 'none' }}>
+                                            <CardSlot card={card} />
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
                 </div>
 
                 <div className="modal-footer" style={{ marginTop: '1rem' }}>
