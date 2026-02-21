@@ -373,7 +373,7 @@ function App() {
 
   const handleAddPlayer = () => {
     // Enabled in dealing mode per user request
-    if (players.length < 9) {
+    if (players.length < 10 && gameStage === 'idle') {
       setPlayers([...players, [null, null]]);
     }
   };
@@ -533,7 +533,15 @@ function App() {
           </div>
 
           {dealingMode && (
-            <button className="btn-secondary add-player-btn" onClick={handleAddPlayer}>
+            <button
+              className="btn-secondary add-player-btn"
+              onClick={handleAddPlayer}
+              disabled={gameStage !== 'idle' || players.length >= 10}
+              style={{
+                opacity: (gameStage !== 'idle' || players.length >= 10) ? 0.5 : 1,
+                cursor: (gameStage !== 'idle' || players.length >= 10) ? 'not-allowed' : 'pointer'
+              }}
+            >
               + Add Player
             </button>
           )}
