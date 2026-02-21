@@ -461,7 +461,7 @@ function App() {
           <Board
             cards={board}
             onCardClick={(i) => handleSlotClick('board', i)}
-            onRemove={(i) => handleRemoveCard('board', i)}
+            onRemove={dealingMode ? undefined : (i) => handleRemoveCard('board', i)}
             tiePercent={tiePct}
             dealingMode={dealingMode}
             onToggleMode={toggleDealingMode}
@@ -509,7 +509,7 @@ function App() {
                   winPercent={results && results[i] ? results[i]!.win : null}
                   handResult={handResults[i]}
                   onCardClick={(cardIdx) => handleSlotClick('player', i, cardIdx)}
-                  onRemove={(cardIdx) => handleRemoveCard('player', i, cardIdx)}
+                  onRemove={undefined}
                   onRemoveVillain={players.length > 2 ? () => handleRemovePlayer(i) : undefined}
                   isHero={false} // Removed "hero" distinction for styling
                   compact={false} // Always use full size for consistency
