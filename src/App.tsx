@@ -12,7 +12,6 @@ import './index.css'
 const calculator = new Calculator();
 
 function App() {
-  const [totalPlayers, setTotalPlayers] = useState<number>(2);
 
   const [players, setPlayers] = useState<(string | null)[][]>([[null, null], [null, null]]); // Start with 2 players
   const [board, setBoard] = useState<(string | null)[]>([null, null, null, null, null]);
@@ -39,7 +38,7 @@ function App() {
       calculateNuts();
     }, 500);
     return () => clearTimeout(timer);
-  }, [players, board, totalPlayers, dealingMode]);
+  }, [players, board, dealingMode]);
 
   const calculateOdds = () => {
     // Valid players must have 2 cards
@@ -102,7 +101,7 @@ function App() {
         // Manual "Hero vs Random" Mode
         const heroCards = players[0].filter(c => c) as string[];
         const boardCards = board.filter(c => c) as string[];
-        const numOpponents = totalPlayers - 1;
+        const numOpponents = players.length - 1;
 
         if (numOpponents < 1) {
           setResults(null);
@@ -143,18 +142,7 @@ function App() {
 
   // Dealer Logic
   const toggleDealingMode = () => {
-    setDealingMode(prev => {
-      const nextMode = !prev;
-      if (!nextMode) {
-        // Turning OFF dealing mode: reset stage, keep cards? or reset all?
-        // Let's reset the stage to idle but keep the cards for analysis. 
-        setGameStage('idle');
-      } else {
-        // Turning ON: Reset everything to start fresh
-        handleReset();
-      }
-      return nextMode;
-    });
+    setDealingMode(prev => !prev);
   };
 
   const handleDeal = () => {
@@ -386,13 +374,24 @@ function App() {
     }
   };
 
+  const handleTotalPlayersChange = (newTotal: number) => {
+    setPlayers(prev => {
+      if (newTotal > prev.length) {
+        const added = Array.from({ length: newTotal - prev.length }, () => [null, null] as (string | null)[]);
+        return [...prev, ...added];
+      } else if (newTotal < prev.length) {
+        return prev.slice(0, newTotal);
+      }
+      return prev;
+    });
+  };
+
   const handleReset = () => {
-    setPlayers([[null, null], [null, null]]);
+    setPlayers(prev => prev.map(() => [null, null]));
     setBoard([null, null, null, null, null]);
     setResults(null);
     setGameStage('idle');
     setHandResults([]);
-    setTotalPlayers(2);
   };
 
   // Computed for Modal
@@ -490,10 +489,10 @@ function App() {
           {!dealingMode && (
             <div className="total-players-control" style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'center' }}>
               <NumericStepper
-                value={totalPlayers}
+                value={players.length}
                 min={2}
                 max={10}
-                onChange={setTotalPlayers}
+                onChange={handleTotalPlayersChange}
                 label="Total Players:"
               />
             </div>
