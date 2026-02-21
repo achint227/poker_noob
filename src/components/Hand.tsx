@@ -55,14 +55,15 @@ const Hand: React.FC<HandProps> = ({
             </div>
 
             <div className="stats">
-                {handResult ? (
-                    <div className="hand-result">
+                {winPercent !== null && (
+                    <div className="equity-value" style={handResult ? { marginBottom: '0.5rem' } : {}}>
+                        {winPercent.toFixed(2)}%
+                    </div>
+                )}
+                {handResult && (
+                    <div className="hand-result" style={winPercent !== null ? { marginTop: 0 } : {}}>
                         <span className="hand-description">{handResult.description}</span>
                         {isWinner && <span className="winner-badge">{isSplit ? 'SPLIT' : 'WINNER'}</span>}
-                    </div>
-                ) : (
-                    <div className="equity-value">
-                        {winPercent !== null ? `${winPercent.toFixed(2)}` : null}
                     </div>
                 )}
             </div>

@@ -249,16 +249,34 @@ function App() {
     }
   }
 
-  // Calculate final hand details for display (only on River or when 5 cards are on board)
+  // Calculate final hand details for display
   useEffect(() => {
-    // Only calculate accurate hand descriptions/winner in Dealing Mode
-    // In Manual Mode, we rely on Equity (winPercent) to show "100.00" or "0.00"
+    const boardCards = board.filter(c => c) as string[];
+
     if (!dealingMode) {
+      const heroCards = players.length > 0 ? (players[0].filter(c => c) as string[]) : [];
+      if (heroCards.length === 2 && boardCards.length >= 3) {
+        const validCards = heroCards.map(c => calculator.parseCard(c)).filter(c => c !== null) as unknown as import('./utils/deck').Card[];
+        const validBoard = boardCards.map(c => calculator.parseCard(c)).filter(c => c !== null) as unknown as import('./utils/deck').Card[];
+
+        const fullHand = [...validCards, ...validBoard];
+        const det = calculator.getHandDetails(fullHand);
+
+        if (det) {
+          const res: (HandResult | null)[] = Array(players.length).fill(null);
+          res[0] = {
+            ...det,
+            description: det.description,
+            isWinner: false,
+            isSplit: false
+          };
+          setHandResults(res);
+          return;
+        }
+      }
       setHandResults([]);
       return;
     }
-
-    const boardCards = board.filter(c => c) as string[];
 
     // Trigger if we are effectively at the "River" (5 board cards)
     if (boardCards.length === 5) {
