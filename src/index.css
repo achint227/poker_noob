@@ -443,27 +443,35 @@ button:disabled {
     color: white;
 }
 
-.rank-btn.s:hover:not(:disabled) {
+.rank-btn.s:hover:not(:disabled),
+.rank-btn.s.active {
     background-color: var(--slate-700);
     border-color: black;
+    color: white;
 }
 
-.rank-btn.h:hover:not(:disabled) {
+.rank-btn.h:hover:not(:disabled),
+.rank-btn.h.active {
     background-color: var(--suit-heart);
     border-color: #b91c1c;
     /* darker red hover */
+    color: white;
 }
 
-.rank-btn.d:hover:not(:disabled) {
+.rank-btn.d:hover:not(:disabled),
+.rank-btn.d.active {
     background-color: var(--suit-diamond);
     border-color: #1d4ed8;
     /* darker blue hover */
+    color: white;
 }
 
-.rank-btn.c:hover:not(:disabled) {
+.rank-btn.c:hover:not(:disabled),
+.rank-btn.c.active {
     background-color: var(--suit-club);
     border-color: #15803d;
     /* darker green hover */
+    color: white;
 }
 
 .rank-btn:disabled,
@@ -473,6 +481,28 @@ button:disabled {
     background-color: var(--slate-200);
     border-color: var(--slate-300);
     color: var(--slate-500);
+}
+
+/* Random Card Button */
+.random-card-btn {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin: 0 auto;
+    background-color: var(--accent-color);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.random-card-btn:hover {
+    background-color: var(--accent-hover);
 }
 
 /* Villain specific */

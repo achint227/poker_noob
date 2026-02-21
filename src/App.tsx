@@ -205,7 +205,7 @@ function App() {
     setIsModalOpen(true);
   };
 
-  const handleSelectCard = (card: string) => {
+  const handleSelectCard = (card: string, closeModal: boolean = true) => {
     if (!editingSlot) return;
     const { type, index, subIndex } = editingSlot;
 
@@ -221,7 +221,9 @@ function App() {
       }
       setPlayers(newPlayers);
     }
-    setIsModalOpen(false);
+    if (closeModal) {
+      setIsModalOpen(false);
+    }
   };
 
   const handleRemoveCard = (type: 'player' | 'board', index: number, subIndex?: number) => {
