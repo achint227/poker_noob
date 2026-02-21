@@ -341,13 +341,138 @@ button:disabled {
     color: white;
 }
 
-/* Interactive Modal & Big Card */
-.interactive-card-container {
+/* Card Selector Modal Light Theme */
+.card-selector-modal {
+    background-color: var(--slate-300);
+    color: var(--bg-color);
+}
+
+.card-selector-modal .close-modal {
+    color: var(--slate-700);
+}
+
+.card-selector-modal .close-modal:hover {
+    color: black;
+}
+
+.card-selector-body {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    gap: 1rem;
+    gap: 1.5rem;
     padding: 1rem 0;
+}
+
+.suit-selector {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.suit-btn {
+    flex: 1;
+    font-size: 2rem;
+    padding: 0.5rem;
+    background-color: white;
+    border: 2px solid var(--slate-400);
+    border-radius: 8px;
+    transition: all 0.2s;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.suit-btn.s {
+    color: black;
+}
+
+.suit-btn.h {
+    color: var(--suit-heart);
+}
+
+.suit-btn.d {
+    color: var(--suit-diamond);
+}
+
+.suit-btn.c {
+    color: var(--suit-club);
+}
+
+.suit-btn:hover {
+    background-color: var(--slate-100);
+}
+
+.suit-btn.active {
+    background-color: var(--slate-200);
+}
+
+.suit-btn.active.s {
+    border-color: black;
+}
+
+.suit-btn.active.h {
+    border-color: var(--suit-heart);
+}
+
+.suit-btn.active.d {
+    border-color: var(--suit-diamond);
+}
+
+.suit-btn.active.c {
+    border-color: var(--suit-club);
+}
+
+.rank-selector {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+    gap: 0.5rem;
+}
+
+.rank-btn {
+    font-size: 1.25rem;
+    font-weight: 700;
+    padding: 0.75rem 0.5rem;
+    background-color: white;
+    border: 1px solid var(--slate-400);
+    border-radius: 6px;
+    color: var(--bg-color);
+    transition: all 0.2s;
+}
+
+.rank-btn:hover:not(:disabled) {
+    color: white;
+}
+
+.rank-btn.s:hover:not(:disabled) {
+    background-color: var(--slate-700);
+    border-color: black;
+}
+
+.rank-btn.h:hover:not(:disabled) {
+    background-color: var(--suit-heart);
+    border-color: #b91c1c;
+    /* darker red hover */
+}
+
+.rank-btn.d:hover:not(:disabled) {
+    background-color: var(--suit-diamond);
+    border-color: #1d4ed8;
+    /* darker blue hover */
+}
+
+.rank-btn.c:hover:not(:disabled) {
+    background-color: var(--suit-club);
+    border-color: #15803d;
+    /* darker green hover */
+}
+
+.rank-btn:disabled,
+.rank-btn.taken {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background-color: var(--slate-200);
+    border-color: var(--slate-300);
+    color: var(--slate-500);
 }
 
 /* Villain specific */
@@ -761,6 +886,7 @@ input:checked+.slider:before {
     text-transform: uppercase;
     letter-spacing: 0.05em;
 }
+
 /* Hand Ranking Modal Styles */
 .ranking-name-container {
     position: relative;
