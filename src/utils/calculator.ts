@@ -315,7 +315,7 @@ export class Calculator {
         return null;
     }
 
-    calculateEquity(heroCardsStr: string[], villainsCardsStr: string[][], boardCardsStr: string[], iterations = 1000): EquityResult {
+    calculateEquity(heroCardsStr: string[], villainsCardsStr: string[][], boardCardsStr: string[], iterations = 50000): EquityResult {
         const heroCards = heroCardsStr.map(c => this.parseCard(c)).filter(c => c !== null) as Card[];
         const villainsCards = villainsCardsStr.map(hand => hand.map(c => this.parseCard(c)).filter(c => c !== null) as Card[]);
         const boardCards = boardCardsStr.map(c => this.parseCard(c)).filter(c => c !== null) as Card[];
@@ -391,7 +391,7 @@ export class Calculator {
         };
     }
 
-    calculateEquityAgainstRandom(heroCardsStr: string[], boardCardsStr: string[], numVillains: number, iterations = 1000): PlayerEquity {
+    calculateEquityAgainstRandom(heroCardsStr: string[], boardCardsStr: string[], numVillains: number, iterations = 50000): PlayerEquity {
         const heroCards = heroCardsStr.map(c => this.parseCard(c)).filter(c => c !== null) as Card[];
         const boardCards = boardCardsStr.map(c => this.parseCard(c)).filter(c => c !== null) as Card[];
 

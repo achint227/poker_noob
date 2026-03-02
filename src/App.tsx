@@ -23,6 +23,7 @@ function App() {
   const [results, setResults] = useState<(PlayerEquity | null)[] | null>(null);
   const [handResults, setHandResults] = useState<(HandResult | null)[]>([]);
   const [nuts, setNuts] = useState<HandDetails | null>(null);
+  const [isCalculating, setIsCalculating] = useState<boolean>(false);
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
@@ -33,11 +34,16 @@ function App() {
 
   // Calculation Logic
   useEffect(() => {
+    setIsCalculating(true);
     const timer = setTimeout(() => {
       calculateOdds();
       calculateNuts();
+      setIsCalculating(false);
     }, 500);
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      setIsCalculating(false);
+    };
   }, [players, board, dealingMode]);
 
   const calculateOdds = () => {
@@ -87,7 +93,7 @@ function App() {
 
         const boardCards = board.filter(c => c) as string[];
 
-        const res = calculator.calculateEquity(heroCards, villainHands, boardCards, 5000);
+        const res = calculator.calculateEquity(heroCards, villainHands, boardCards, 50000);
 
         const newResults: (PlayerEquity | null)[] = Array(players.length).fill(null);
         newResults[heroConfig.index] = res.hero;
@@ -108,7 +114,7 @@ function App() {
           return;
         }
 
-        const res = calculator.calculateEquityAgainstRandom(heroCards, boardCards, numOpponents, 5000);
+        const res = calculator.calculateEquityAgainstRandom(heroCards, boardCards, numOpponents, 50000);
 
         // Results array: [HeroWin]
         // We only show result for Player 0
@@ -469,6 +475,7 @@ function App() {
             onDeal={handleDeal}
             onReset={handleReset}
             gameStage={gameStage}
+            isCalculating={isCalculating}
           />
           {nuts && !dealingMode && (
             <div style={{
@@ -534,6 +541,7 @@ function App() {
                   onRemoveVillain={players.length > 2 ? () => handleRemovePlayer(i) : undefined}
                   isHero={false} // Removed "hero" distinction for styling
                   compact={false} // Always use full size for consistency
+                  isCalculating={isCalculating}
                 />
               ))
             ) : (
@@ -549,6 +557,7 @@ function App() {
                 onRemoveVillain={undefined}
                 isHero={true}
                 compact={false}
+                isCalculating={isCalculating}
               />
             )}
           </div>

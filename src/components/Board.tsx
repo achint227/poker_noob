@@ -11,9 +11,10 @@ interface BoardProps {
     onDeal: () => void;
     onReset: () => void;
     gameStage: string;
+    isCalculating?: boolean;
 }
 
-const Board: React.FC<BoardProps> = ({ cards, onCardClick, onRemove, tiePercent, dealingMode, onToggleMode, onDeal, onReset, gameStage }) => {
+const Board: React.FC<BoardProps> = ({ cards, onCardClick, onRemove, tiePercent, dealingMode, onToggleMode, onDeal, onReset, gameStage, isCalculating = false }) => {
     // get 5 slots, fill with cards or null
     const slots = Array(5).fill(null).map((_, i) => cards[i] || null);
 
@@ -73,7 +74,23 @@ const Board: React.FC<BoardProps> = ({ cards, onCardClick, onRemove, tiePercent,
                     color: 'var(--text-secondary)',
                     textAlign: 'center'
                 }}>
-                    {dealingMode && tiePercent !== undefined && tiePercent !== null && (
+                    {isCalculating && dealingMode ? (
+                        <span style={{ display: 'inline-flex', alignItems: 'center' }}>
+                            Split:
+                            <strong style={{
+                                color: 'var(--text-primary)',
+                                width: '4.5rem',
+                                display: 'inline-flex',
+                                justifyContent: 'flex-start',
+                                alignItems: 'center',
+                                paddingLeft: '0.25rem',
+                            }}>
+                                <div className="loading-dots">
+                                    <span></span><span></span><span></span>
+                                </div>
+                            </strong>
+                        </span>
+                    ) : dealingMode && tiePercent !== undefined && tiePercent !== null && (
                         <span style={{ display: 'inline-flex', alignItems: 'center' }}>
                             Split:
                             <strong style={{

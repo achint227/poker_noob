@@ -17,6 +17,7 @@ interface HandProps {
     onRemoveVillain?: () => void;
     isHero?: boolean;
     compact?: boolean;
+    isCalculating?: boolean;
 }
 
 const Hand: React.FC<HandProps> = ({
@@ -28,7 +29,8 @@ const Hand: React.FC<HandProps> = ({
     onRemove,
     onRemoveVillain,
     isHero = false,
-    compact = false
+    compact = false,
+    isCalculating = false
 }) => {
     // cards is array [card1, card2]
     const isWinner = handResult?.isWinner;
@@ -54,8 +56,14 @@ const Hand: React.FC<HandProps> = ({
                 ))}
             </div>
 
-            <div className="stats">
-                {winPercent !== null && (
+            <div className="stats" style={{ minHeight: '40px' }}>
+                {isCalculating ? (
+                    <div className="equity-value" style={handResult ? { marginBottom: '0.5rem', display: 'flex', justifyContent: 'center' } : { display: 'flex', justifyContent: 'center' }}>
+                        <div className="loading-dots">
+                            <span></span><span></span><span></span>
+                        </div>
+                    </div>
+                ) : winPercent !== null && (
                     <div className="equity-value" style={handResult ? { marginBottom: '0.5rem' } : {}}>
                         {winPercent.toFixed(2)}%
                     </div>
