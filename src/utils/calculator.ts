@@ -40,90 +40,152 @@ export class Calculator {
     // Evaluate the strength of a 5-7 card hand
     // Returns a score where higher is better.
     evaluateHand(cards: Card[]): number {
-        if (cards.length < 5) return 0;
+        const numCards = cards.length;
+        if (numCards < 5) return 0;
 
-        // Sort cards by rank descending
-        cards.sort((a, b) => b.value - a.value);
+        let rankMask = 0;
+        const rankCounts = new Int8Array(13);
+        const suitCounts = new Int8Array(4);
+        const suitMasks = new Int32Array(4); // Bitmask of ranks for each suit
 
-        const ranks = cards.map(c => c.value);
-        const suits = cards.map(c => c.suit);
+        for (let i = 0; i < numCards; i++) {
+            const card = cards[i];
+            const r = card.value;
+            const s = card.id % 4; // 's', 'h', 'd', 'c' -> 0, 1, 2, 3
+            rankMask |= (1 << r);
+            rankCounts[r]++;
+            suitCounts[s]++;
+            suitMasks[s] |= (1 << r);
+        }
 
         // Check Flush
-        const flushSuit = this.getFlushSuit(suits);
-        const flushCards = flushSuit ? cards.filter(c => c.suit === flushSuit) : [];
-
-        // Check Straight
-        const straightHighRank = this.getStraightHighRank(ranks);
-
-        // Check Straight Flush
-        let straightFlushHighRank = -1;
-        if (flushSuit) {
-            const flushRanks = flushCards.map(c => c.value);
-            straightFlushHighRank = this.getStraightHighRank(flushRanks);
-        }
-
-        // 8. Straight Flush
-        if (straightFlushHighRank !== -1) {
-            return 8000000 + straightFlushHighRank;
-        }
-
-        // 7. Four of a Kind
-        const quads = this.getNOfAKind(ranks, 4);
-        if (quads) {
-            return 7000000 + (quads.rank * 100) + quads.kickers[0];
-        }
-
-        // 6. Full House
-        const trips = this.getNOfAKind(ranks, 3);
-        if (trips) {
-            // Find pair in remaining
-            const remaining = ranks.filter(r => r !== trips.rank);
-            const pair = this.getNOfAKind(remaining, 2);
-            if (pair) {
-                return 6000000 + (trips.rank * 100) + pair.rank;
+        let flushSuit = -1;
+        for (let s = 0; s < 4; s++) {
+            if (suitCounts[s] >= 5) {
+                flushSuit = s;
+                break;
             }
         }
 
+        // Check Straight Flush
+        if (flushSuit !== -1) {
+            const sfHighRank = this.getStraightHighRankFromMask(suitMasks[flushSuit]);
+            if (sfHighRank !== -1) return 8000000 + sfHighRank;
+        }
+
+        // 7. Four of a Kind
+        let quadsRank = -1;
+        let tripsRank = -1;
+        const pairs: number[] = [];
+
+        for (let r = 12; r >= 0; r--) {
+            const count = rankCounts[r];
+            if (count === 4) quadsRank = r;
+            else if (count === 3) {
+                if (tripsRank === -1) tripsRank = r;
+                else pairs.push(r); // Second trips is also a pair
+            }
+            else if (count === 2) pairs.push(r);
+        }
+
+        if (quadsRank !== -1) {
+            let kicker = -1;
+            for (let r = 12; r >= 0; r--) {
+                if (r !== quadsRank && rankCounts[r] > 0) {
+                    kicker = r;
+                    break;
+                }
+            }
+            return 7000000 + (quadsRank * 100) + kicker;
+        }
+
+        // 6. Full House
+        if (tripsRank !== -1 && pairs.length > 0) {
+            return 6000000 + (tripsRank * 100) + pairs[0];
+        }
+
         // 5. Flush
-        if (flushSuit) {
-            // Top 5 cards of the flush
+        if (flushSuit !== -1) {
             let score = 5000000;
-            for (let i = 0; i < 5; i++) {
-                score += flushCards[i].value * Math.pow(15, 4 - i); // Base 15 weighting
+            let count = 0;
+            const mask = suitMasks[flushSuit];
+            for (let r = 12; r >= 0; r--) {
+                if ((mask >> r) & 1) {
+                    score += r * Math.pow(15, 4 - count);
+                    if (++count === 5) break;
+                }
             }
             return score;
         }
 
         // 4. Straight
-        if (straightHighRank !== -1) {
-            return 4000000 + straightHighRank;
-        }
+        const straightHighRank = this.getStraightHighRankFromMask(rankMask);
+        if (straightHighRank !== -1) return 4000000 + straightHighRank;
 
         // 3. Three of a Kind
-        if (trips) {
-            return 3000000 + (trips.rank * 1000) + trips.kickers[0] * 15 + trips.kickers[1];
+        if (tripsRank !== -1) {
+            let score = 3000000 + (tripsRank * 1000);
+            let count = 0;
+            for (let r = 12; r >= 0; r--) {
+                if (r !== tripsRank && rankCounts[r] > 0) {
+                    score += r * (count === 0 ? 15 : 1);
+                    if (++count === 2) break;
+                }
+            }
+            return score;
         }
 
         // 2. Two Pair
-        const pair1 = this.getNOfAKind(ranks, 2);
-        if (pair1) {
-            const remaining = ranks.filter(r => r !== pair1.rank);
-            const pair2 = this.getNOfAKind(remaining, 2);
-            if (pair2) {
-                const kicker = remaining.find(r => r !== pair2.rank);
-                return 2000000 + (pair1.rank * 1000) + (pair2.rank * 15) + (kicker || 0);
+        if (pairs.length >= 2) {
+            let kicker = -1;
+            for (let r = 12; r >= 0; r--) {
+                if (r !== pairs[0] && r !== pairs[1] && rankCounts[r] > 0) {
+                    kicker = r;
+                    break;
+                }
             }
+            return 2000000 + (pairs[0] * 1000) + (pairs[1] * 15) + kicker;
+        }
 
-            // 1. One Pair
-            return 1000000 + (pair1.rank * 1000) + pair1.kickers[0] * 225 + pair1.kickers[1] * 15 + pair1.kickers[2];
+        // 1. One Pair
+        if (pairs.length === 1) {
+            let score = 1000000 + (pairs[0] * 1000);
+            let count = 0;
+            const multipliers = [225, 15, 1];
+            for (let r = 12; r >= 0; r--) {
+                if (r !== pairs[0] && rankCounts[r] > 0) {
+                    score += r * multipliers[count];
+                    if (++count === 3) break;
+                }
+            }
+            return score;
         }
 
         // 0. High Card
         let score = 0;
-        for (let i = 0; i < 5; i++) {
-            score += ranks[i] * Math.pow(15, 4 - i);
+        let count = 0;
+        for (let r = 12; r >= 0; r--) {
+            if (rankCounts[r] > 0) {
+                score += r * Math.pow(15, 4 - count);
+                if (++count === 5) break;
+            }
         }
         return score;
+    }
+
+    private getStraightHighRankFromMask(mask: number): number {
+        // Check for 5 consecutive bits
+        for (let r = 12; r >= 4; r--) {
+            const straightMask = 0x1F << (r - 4);
+            if ((mask & straightMask) === straightMask) return r;
+        }
+
+        // Special case: Wheel (A-5)
+        // A is bit 12, 5-2 are bits 3-0
+        // 1000000001111 in binary is 0x100F
+        if ((mask & 0x100F) === 0x100F) return 3;
+
+        return -1;
     }
 
     getHandDetails(cards: Card[]): HandDetails | null {
@@ -326,52 +388,70 @@ export class Calculator {
         // Initialize villain stats
         const villainsStats = villainsCards.map(() => ({ wins: 0, ties: 0 }));
 
+        const deck = new Deck();
+        const allVillainCardsFlattened = villainsCards.flat();
+        const knownCards = [...heroCards, ...allVillainCardsFlattened, ...boardCards];
+        deck.prepareForSimulation(knownCards);
+
+        const currentHandCards = new Array<Card>(7);
+        // Fill hero cards at the beginning of currentHandCards
+        for (let j = 0; j < heroCards.length; j++) currentHandCards[j] = heroCards[j];
+
         for (let i = 0; i < iterations; i++) {
-            const deck = new Deck();
-            const allVillainCardsFlattened = villainsCards.flat();
-            const knownCards = [...heroCards, ...allVillainCardsFlattened, ...boardCards];
-            deck.removeCards(knownCards);
+            deck.resetForSimulation();
             deck.shuffle();
 
-            // Deal remaining board
-            const currentBoard = [...boardCards];
-            while (currentBoard.length < 5) {
+            // Deal remaining board cards into currentHandCards
+            let boardIdx = heroCards.length;
+            // Add existing board cards
+            for (let j = 0; j < boardCards.length; j++) currentHandCards[boardIdx++] = boardCards[j];
+            // Deal new board cards
+            while (boardIdx < 7) {
                 const card = deck.deal();
-                if (card) currentBoard.push(card);
+                if (card) currentHandCards[boardIdx++] = card;
             }
 
-            const heroScore = this.evaluateHand([...heroCards, ...currentBoard]);
+            const heroScore = this.evaluateHand(currentHandCards);
 
             // Eval all villains
-            const villainScores = villainsCards.map(hand => this.evaluateHand([...hand, ...currentBoard]));
-
-            // Determine winner
             let maxScore = heroScore;
-            // Find absolute max score on table
-            for (const score of villainScores) {
-                if (score > maxScore) maxScore = score;
+            const villainScores = new Array<number>(villainsCards.length);
+            
+            for (let v = 0; v < villainsCards.length; v++) {
+                const vHand = villainsCards[v];
+                // Reuse currentHandCards for villains by replacing hero cards (first 2)
+                currentHandCards[0] = vHand[0];
+                currentHandCards[1] = vHand[1];
+                const vScore = this.evaluateHand(currentHandCards);
+                villainScores[v] = vScore;
+                if (vScore > maxScore) maxScore = vScore;
             }
+            
+            // Restore hero cards for next iteration's hero evaluation (though we might not need to if we evaluate hero first)
+            currentHandCards[0] = heroCards[0];
+            currentHandCards[1] = heroCards[1];
 
             // Check who has maxScore
             const winners: (number | 'hero')[] = [];
             if (heroScore === maxScore) winners.push('hero');
-            villainScores.forEach((score, index) => {
-                if (score === maxScore) winners.push(index);
-            });
+            for (let v = 0; v < villainScores.length; v++) {
+                if (villainScores[v] === maxScore) winners.push(v);
+            }
 
             // Update stats
             if (winners.length === 1) {
-                if (winners[0] === 'hero') {
+                const winner = winners[0];
+                if (winner === 'hero') {
                     heroWins++;
                 } else {
-                    villainsStats[winners[0] as number].wins++;
+                    villainsStats[winner as number].wins++;
                 }
             } else {
                 // Tie logic
                 if (winners.includes('hero')) heroTies++;
-                villainScores.forEach((score, index) => {
-                    if (score === maxScore) villainsStats[index].ties++;
-                });
+                for (let v = 0; v < villainScores.length; v++) {
+                    if (villainScores[v] === maxScore) villainsStats[v].ties++;
+                }
             }
         }
 
@@ -398,48 +478,63 @@ export class Calculator {
         let heroWins = 0;
         let heroTies = 0;
 
+        const deck = new Deck();
+        const knownCards = [...heroCards, ...boardCards];
+        deck.prepareForSimulation(knownCards);
+
+        const currentHandCards = new Array<Card>(7);
+        for (let j = 0; j < heroCards.length; j++) currentHandCards[j] = heroCards[j];
+
+        const villainHands = new Array<[Card, Card]>(numVillains);
+
         for (let i = 0; i < iterations; i++) {
-            const deck = new Deck();
-            const knownCards = [...heroCards, ...boardCards];
-            deck.removeCards(knownCards);
+            deck.resetForSimulation();
             deck.shuffle();
 
             // Deal random hands to villains
-            const villainHands: Card[][] = [];
             for (let v = 0; v < numVillains; v++) {
                 const c1 = deck.deal();
                 const c2 = deck.deal();
-                if (c1 && c2) villainHands.push([c1, c2]);
+                if (c1 && c2) villainHands[v] = [c1, c2];
             }
 
             // Deal remaining board
-            const currentBoard = [...boardCards];
-            while (currentBoard.length < 5) {
+            let boardIdx = heroCards.length;
+            for (let j = 0; j < boardCards.length; j++) currentHandCards[boardIdx++] = boardCards[j];
+            while (boardIdx < 7) {
                 const card = deck.deal();
-                if (card) currentBoard.push(card);
+                if (card) currentHandCards[boardIdx++] = card;
             }
 
-            const heroScore = this.evaluateHand([...heroCards, ...currentBoard]);
+            const heroScore = this.evaluateHand(currentHandCards);
 
             // Eval all villains
             let maxScore = heroScore;
-            const villainScores = villainHands.map(hand => {
-                const s = this.evaluateHand([...hand, ...currentBoard]);
-                if (s > maxScore) maxScore = s;
-                return s;
-            });
+            let heroHasMax = true;
+            let isTie = false;
 
-            // Check if hero wins or ties
-            const winners: (number | 'hero')[] = [];
-            if (heroScore === maxScore) winners.push('hero');
-            villainScores.forEach((score, index) => {
-                if (score === maxScore) winners.push(index);
-            });
+            for (let v = 0; v < numVillains; v++) {
+                const vHand = villainHands[v];
+                currentHandCards[0] = vHand[0];
+                currentHandCards[1] = vHand[1];
+                const vScore = this.evaluateHand(currentHandCards);
+                
+                if (vScore > maxScore) {
+                    maxScore = vScore;
+                    heroHasMax = false;
+                    isTie = false;
+                } else if (vScore === maxScore) {
+                    isTie = true;
+                }
+            }
 
-            if (winners.length === 1 && winners[0] === 'hero') {
-                heroWins++;
-            } else if (winners.includes('hero')) {
-                heroTies++;
+            // Restore hero cards
+            currentHandCards[0] = heroCards[0];
+            currentHandCards[1] = heroCards[1];
+
+            if (heroHasMax) {
+                if (isTie) heroTies++;
+                else heroWins++;
             }
         }
 
